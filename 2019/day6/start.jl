@@ -1,15 +1,6 @@
 f = open("input")
-lines = readlines(f)
+orbmap = readlines(f)
 close(f)
-
-struct obj
-  orbits
-  orbitedby
-end
-
-com = obj(nothing,nothing)
-
-occursin("hell", "hello")
 
 function find_next(s,orbmap)
   for orb in orbmap 
@@ -20,16 +11,17 @@ function find_next(s,orbmap)
   end
 end
 
-function count_till_com(s,orbmap)
+function count_till_obj(currentobj,obj,orbmap)
   count = 0
-  currentobj = s 
-  while(currentobj!="COM")
+  while(currentobj!=obj)
     currentobj = find_next(currentobj,orbmap)
     #println(currentobj)
     count = count + 1
   end
   return count
 end
+
+count_till_com(s,orbmap) = count_till_obj(s,"COM",orbmap) 
 
 function count_all(orbmap)
   totcount=0
@@ -40,5 +32,32 @@ function count_all(orbmap)
   return totcount
 end
 
-#count_till_com("NQY",lines)
-print("first answer", count_all(lines))
+function path_till_obj(currentobj,obj,orbmap)
+  path = []
+  while(currentobj!=obj)
+    currentobj = find_next(currentobj,orbmap)
+    push!(path,currentobj)
+  end
+  return path
+end
+
+path_till_com(currentobj,orbmap) = path_till_obj(currentobj,"COM",orbmap)
+
+
+function find_transfers(path1,path2,orbmap)
+    intersection = nothing
+    for s in reverse(youpath)
+      if s in sanpath
+        intersection = s
+      end
+    end
+    #find intesection and count both paths till intersection
+    return count_till_obj("YOU",intersection,orbmap) + count_till_obj("SAN",intersection,orbmap) - 2 # -2 because YOU to orbiting planet and orbitting planet to SAN dont count
+end
+
+youpath = path_till_com("YOU",orbmap)
+sanpath = path_till_com("SAN",orbmap)
+
+#count_till_com("NQY",orbmap)
+println("first answer ", count_all(orbmap))
+println("second answer ", find_transfers(youpath,sanpath,orbmap))
