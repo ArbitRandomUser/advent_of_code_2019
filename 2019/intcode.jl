@@ -141,10 +141,3 @@ function run_program(prog::program, pc::Int = 0)
   end
 end #run_program
 end #module
-
-##term cell
-#using .IntCode
-#
-#p = program([1002,4,5,6,33],0)
-#IntCode.addrmode(p)
-
