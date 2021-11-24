@@ -53,12 +53,20 @@ function op_code2(prog::program)
   prog.pc = prog.pc + 4
 end
 
-function op_code3(prog::program)
-  print("awaiting stdin input : ")
-  inp = parse(Int,readline(stdin))
+function op_code3(prog::program,args,argpos)
+  try 
+    inp=args[argpos]
+  catch err
+    if isa(err,BoundsErrro)
+      print("awaiting stdin input : ")
+      inp = parse(Int,readline(stdin))
+    end
+  end
+
   i,j,k = addrmode(prog)
   prog[i] = inp 
   prog.pc = prog.pc + 2
+  argpos = argpos + 1
 end
 
 function op_code4(prog::program)
@@ -105,14 +113,14 @@ function op_code8(prog::program)
   prog.pc = prog.pc + 4
 end
 
-function step_program(prog::program)
+function step_program(prog::program,args,argpos)
     end_flag = 0
     if get_cur_op(prog) == 1
       op_code1(prog)
     elseif get_cur_op(prog) == 2
       op_code2(prog)
     elseif get_cur_op(prog) == 3
-      op_code3(prog)
+      argpos = op_code3(prog)
     elseif get_cur_op(prog) == 4
       op_code4(prog)
     elseif get_cur_op(prog) == 5
@@ -126,15 +134,16 @@ function step_program(prog::program)
     elseif get_cur_op(prog) == 99
       end_flag = 1 
     end
-  return end_flag
+  return end_flag, argpos
 end
 
-function run_program(prog::program, pc::Int = 0)
+function run_program(prog::program,args=[], pc::Int = 0)
   prog.pc = pc 
   end_flag = 0
+  argspos = 1
   while(end_flag == 0)
-    #println("running instruction" , prog[prog.pc])
-    end_flag = step_program(prog)
+    #argpos gets incremented in op_code3 and is returned all the way back here
+    end_flag,argpos = step_program(prog,args,argpos)
     if end_flag == 1
       break
     end
