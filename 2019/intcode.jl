@@ -72,7 +72,9 @@ end
 function op_code4(prog::program)
   i,j,k = addrmode(prog)
   println("output : ",prog[i])
+  ret = prog[i]
   prog.pc = prog.pc + 2
+  return ret
 end
 
 function op_code5(prog::program)
@@ -122,7 +124,7 @@ function step_program(prog::program,args,argpos)
     elseif get_cur_op(prog) == 3
       argpos = op_code3(prog)
     elseif get_cur_op(prog) == 4
-      op_code4(prog)
+      ret = op_code4(prog)
     elseif get_cur_op(prog) == 5
       op_code5(prog)
     elseif get_cur_op(prog) == 6
@@ -134,19 +136,23 @@ function step_program(prog::program,args,argpos)
     elseif get_cur_op(prog) == 99
       end_flag = 1 
     end
-  return end_flag, argpos
+  return end_flag,ret,argpos
 end
 
 function run_program(prog::program,args=[], pc::Int = 0)
   prog.pc = pc 
   end_flag = 0
   argspos = 1
+  retvals = []
   while(end_flag == 0)
     #argpos gets incremented in op_code3 and is returned all the way back here
-    end_flag,argpos = step_program(prog,args,argpos)
+    end_flag,ret,argpos = step_program(prog,args,argpos)
+    push!(retvals,ret)
     if end_flag == 1
       break
     end
   end
+  return retvals
 end #run_program
+
 end #module
