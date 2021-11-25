@@ -124,6 +124,7 @@ end
 
 function step_program(prog::program,args)
     end_flag = 0
+    op_flag = 0
     ret = nothing
     if get_cur_op(prog) == 1
       op_code1(prog)
@@ -133,6 +134,7 @@ function step_program(prog::program,args)
       op_code3(prog,args)
     elseif get_cur_op(prog) == 4
       op_code4(prog)
+      op_flag = 1
     elseif get_cur_op(prog) == 5
       op_code5(prog)
     elseif get_cur_op(prog) == 6
@@ -144,17 +146,19 @@ function step_program(prog::program,args)
     elseif get_cur_op(prog) == 99
       end_flag = 1 
     end
-  return end_flag
+  return end_flag,op_flag
 end
 
 function run_program(prog::program,args=[]; mode="TILLHALT")
   #println("running with args",args)
   #mode can be TILLHALT or TILLOP
   end_flag = 0
+  op_flag = 0
   while(end_flag == 0)
-    #argpos gets incremented in op_code3 and is returned all the way back here
-    end_flag = step_program(prog,args)
-    if end_flag == 1
+    end_flag,op_flag = step_program(prog,args)
+    if end_flag == 1 
+      break
+    elseif mode="TILLOP" && op_flag==1
       break
     end
   end
