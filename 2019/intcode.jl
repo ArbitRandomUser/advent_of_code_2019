@@ -4,9 +4,11 @@ export step_program, run_program, program
 mutable struct program
   ops::Array ##array of ops
   pc::Int ##program pc
+  argpos::Int
+  retvals::Array
 end
 
-program(x::Array) = program(copy(x),0) #we copy the ops 
+program(x::Array) = program(copy(x),0,1,[]) #we copy the ops 
 
 ##julia is 1 indexed soo..
 function Base.getindex(prog::program,i::Int)
@@ -53,28 +55,33 @@ function op_code2(prog::program)
   prog.pc = prog.pc + 4
 end
 
-function op_code3(prog::program,args,argpos)
+function op_code3(prog::program,args)
+  #println("running opcode3")
+  inp = nothing
+  #println(args , " " , argpos)
   try 
-    inp=args[argpos]
+    inp=args[prog.argpos]
+    #println("got input", inp)
   catch err
-    if isa(err,BoundsErrro)
+    if isa(err,BoundsError)
       print("awaiting stdin input : ")
       inp = parse(Int,readline(stdin))
+    else
+      @assert 1==2 #hack because i dont know how to use try/catch in julia
     end
   end
 
   i,j,k = addrmode(prog)
   prog[i] = inp 
   prog.pc = prog.pc + 2
-  argpos = argpos + 1
+  prog.argpos = prog.argpos + 1
 end
 
 function op_code4(prog::program)
   i,j,k = addrmode(prog)
-  println("output : ",prog[i])
-  ret = prog[i]
+  #println("output : ",prog[i])
+  push!(prog.retvals,prog[i])
   prog.pc = prog.pc + 2
-  return ret
 end
 
 function op_code5(prog::program)
@@ -115,16 +122,17 @@ function op_code8(prog::program)
   prog.pc = prog.pc + 4
 end
 
-function step_program(prog::program,args,argpos)
+function step_program(prog::program,args)
     end_flag = 0
+    ret = nothing
     if get_cur_op(prog) == 1
       op_code1(prog)
     elseif get_cur_op(prog) == 2
       op_code2(prog)
     elseif get_cur_op(prog) == 3
-      argpos = op_code3(prog)
+      op_code3(prog,args)
     elseif get_cur_op(prog) == 4
-      ret = op_code4(prog)
+      op_code4(prog)
     elseif get_cur_op(prog) == 5
       op_code5(prog)
     elseif get_cur_op(prog) == 6
@@ -136,23 +144,21 @@ function step_program(prog::program,args,argpos)
     elseif get_cur_op(prog) == 99
       end_flag = 1 
     end
-  return end_flag,ret,argpos
+  return end_flag
 end
 
-function run_program(prog::program,args=[], pc::Int = 0)
-  prog.pc = pc 
+function run_program(prog::program,args=[]; mode="TILLHALT")
+  #println("running with args",args)
+  #mode can be TILLHALT or TILLOP
   end_flag = 0
-  argspos = 1
-  retvals = []
   while(end_flag == 0)
     #argpos gets incremented in op_code3 and is returned all the way back here
-    end_flag,ret,argpos = step_program(prog,args,argpos)
-    push!(retvals,ret)
+    end_flag = step_program(prog,args)
     if end_flag == 1
       break
     end
   end
-  return retvals
+  return prog.retvals 
 end #run_program
 
 end #module

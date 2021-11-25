@@ -15,7 +15,7 @@ end
 amps = [amp( program(copy(ops)) , 0) for i in 1:5 ]
 
 function run_amp(amp,config,inp::Int)
-  return run_program(amp.prog,[config,inp])[1]
+  return run_program(amp.prog,[config,inp])
 end
 
 function cascade_amps(amps::Array{amp},configs::Array{Int},inp=0)
@@ -24,15 +24,30 @@ function cascade_amps(amps::Array{amp},configs::Array{Int},inp=0)
     amps[ind].config = c
   end
   for amp in amps
-    inp = run_amp(amp,amp.config,inp)
+    inp,ampstate = run_amp(amp,amp.config,inp)
   end
   return inp
 end
+
+function cascade_amps_feedback(amps,configs,inp=0)
+  for (ind,c) in enumerate(configs)
+    amps[ind].config = c
+  end
+  ampstates = [nothing for i in 1:length(amps)]
+  while(ampstates != ["HALT" for i in 1:length(amps)])
+    for (i,amp) in enumerate(amps)
+      inp,ampstate = run_amp(amp,configs[i],inp)
+      ampstates[i] = ampstate
+    end
+  end
+end
+
 
 #println(cascade_amps(amps,[0,1,2,3,4],0))
 
 function calc_best_signal(ops,inputval=0)
   biggestval = -Inf 
+  ampstates = []
   for i1 in 0:4,i2 in 0:4,i3 in 0:4,i4 in 0:4,i5 in 0:4
     amps = [amp( program(copy(ops)) , 0) for i in 1:5 ]
     configs = [i1,i2,i3,i4,i5]
@@ -43,7 +58,23 @@ function calc_best_signal(ops,inputval=0)
 	  end
     end
   end
-  return biggestval
+  return biggestval,ampstates
 end
 
-println("first answer :" , calc_best_signal(ops,0) )
+function calc_best_feedback(ops,inputval=0)
+  biggestval = -Inf
+  ampstates = []
+  for i1 in 5:9,i2 in 5:9,i3 in 5:9,i4 in 5:9,i5 in 5:9
+    amps = [amp( program(copy(ops)) , 0) for i in 1:5 ]
+    configs = [i1,i2,i3,i4,i5]
+    if length(unique(configs)) == length(configs)
+	inputval,ampstates = cascade_amps_feedback(amps,configs,inputval)
+	if inputval > biggestval
+	  biggestval = newal
+	end
+    end
+  end
+end
+
+println("first answer :" , calc_best_signal(ops,0)[1] )
+println("first answer :" , calc_best_feedback(ops,0)[1] )
