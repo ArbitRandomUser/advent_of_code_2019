@@ -1,6 +1,6 @@
 include("../intcode.jl")
 using .IntCode
-using Combinatorics 
+#using Combinatorics 
 
 f = open("input")
 lines = readlines(f)
@@ -15,6 +15,7 @@ end
 amps = [amp( program(copy(ops)) , 0) for i in 1:5 ]
 
 function run_amp(amp,args::Array,)
+  amp.prog.argpos = 1 #reset arg position
   return run_program(amp.prog,args,mode="TILLOP")
 end
 
@@ -46,7 +47,6 @@ function cascade_amps_feedback(amps,configs,inp=0)
     break_flag=false
     for (i,amp) in enumerate(amps)
       #println("feeding amp " ,i, " with " , inp)
-      amp.prog.argpos = 1
       out = run_amp(amp,[inp,])
       #println(out)
       inp = out[end]
