@@ -25,20 +25,27 @@ end
 
 function addrmode(prog::program)
   pc = prog.pc
-  i,j,k = prog[pc+1], prog[pc+2], prog[pc+3]
+  len = length(prog.ops)
+  #%len is to treat the ops as circular
+  #instructions near the end might not need k , but if we assign 
+  #k anyway as pc+3 it might go out of bounds , so we just treat
+  #our ops as a circular array , correct intcode programs should not
+  #use these spurious k values which have rolled over so its okay.
+
+  i,j,k = prog[(pc+1)%len], prog[(pc+2)%len], prog[(pc+3)%len]
   #println( (prog[pc]%Int(1e4))%10 , (prog[pc]%Int(1e3))%10, (prog[pc]%Int(1e2))%10)
   if (prog[pc]÷Int(1e2))%10 == 1
     #print("encountered imm mode for 1")
-    i = pc +1 
+    i = (pc +1)%len 
   end
   if (prog[pc]÷Int(1e3))%10 == 1
     #print("encountered imm mode for 2")
-    j = pc+2
+    j = (pc+2)%len
   end
   if (prog[pc]÷Int(1e4))%10 == 1
     #throw(DomainError(prog[pc] , "Parameters that an instruction writes to
 #		      will never be in immediate mode."))
-    k = pc + 3
+    k = (pc + 3)%len
   end
   i,j,k
 end
@@ -144,6 +151,7 @@ function step_program(prog::program,args)
     elseif get_cur_op(prog) == 8
       op_code8(prog)
     elseif get_cur_op(prog) == 99
+      push!(prog.retvals,"HALT")
       end_flag = 1 
     end
   return end_flag,op_flag
@@ -158,7 +166,7 @@ function run_program(prog::program,args=[]; mode="TILLHALT")
     end_flag,op_flag = step_program(prog,args)
     if end_flag == 1 
       break
-    elseif mode="TILLOP" && op_flag==1
+    elseif mode=="TILLOP" && op_flag==1
       break
     end
   end
