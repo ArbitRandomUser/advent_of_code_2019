@@ -5,6 +5,7 @@ img = lines[1]
 layersize = 25*6
 layers = [img[k:k+layersize-1] for k in 1:layersize:length(img)]
 
+function firstpart()
 min = Inf 
 minlayer=1
 for (i,layer) in enumerate(layers)
@@ -14,5 +15,8 @@ for (i,layer) in enumerate(layers)
     min = no_ofzeros
   end
 end
-#answer = count("1",layers[minlayer])*count("2",layers[minlayer])
+answer = count("1",layers[minlayer])*count("2",layers[minlayer])
 println("first answer : $(answer)")
+end
+
+firstpart()
