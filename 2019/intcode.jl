@@ -4,11 +4,12 @@ export step_program, run_program, program
 mutable struct program
   ops::Array ##array of ops
   pc::Int ##program pc
+  relbase::Int
   argpos::Int
   retvals::Array
 end
 
-program(x::Array) = program(copy(x),0,1,[]) #we copy the ops 
+program(x::Array) = program(copy(x),0,0,1,[]) #we copy the ops 
 
 ##julia is 1 indexed soo..
 function Base.getindex(prog::program,i::Int)
@@ -129,6 +130,12 @@ function op_code8(prog::program)
   prog.pc = prog.pc + 4
 end
 
+function op_code9(prog::program)
+  i,j,k = addrmode(prog)
+  prog.relbase = prog.relbase + prog[i]
+  prog.pc = prog.pc + 2
+end
+
 function step_program(prog::program,args)
     end_flag = 0
     op_flag = 0
@@ -150,6 +157,8 @@ function step_program(prog::program,args)
       op_code7(prog)
     elseif get_cur_op(prog) == 8
       op_code8(prog)
+    elseif get_cur_op(prog) == 9
+      op_code9(prog)
     elseif get_cur_op(prog) == 99
       push!(prog.retvals,"HALT")
       end_flag = 1 
