@@ -13,11 +13,25 @@ program(x::Array) = program(copy(x),0,0,1,[]) #we copy the ops
 
 ##julia is 1 indexed soo..
 function Base.getindex(prog::program,i::Int)
-  return prog.ops[i+1]
+  try
+    return prog.ops[i+1]
+  catch err
+    if isa(err,BoundsError)
+      push!(prog.ops,zeros(i+1-length(prog.ops))...)
+      return prog.ops[i+1]
+    end
+  end
 end
 
 function Base.setindex!(prog::program,val::Int,i::Int)
-  prog.ops[i+1] = val
+  try
+    prog.ops[i+1] = val
+  catch err 
+    if isa(err,BoundsError)
+      push!(prog.ops,zeros(i+1-length(prog.ops))...) 
+      prog.ops[i+1] = val
+    end
+   end
 end
 
 function get_cur_op(prog::program)
@@ -33,20 +47,20 @@ function addrmode(prog::program)
   #our ops as a circular array , correct intcode programs should not
   #use these spurious k values which have rolled over so its okay.
 
-  i,j,k = prog[(pc+1)%len], prog[(pc+2)%len], prog[(pc+3)%len]
+  i,j,k = prog[(pc+1)], prog[(pc+2)], prog[(pc+3)]
   #println( (prog[pc]%Int(1e4))%10 , (prog[pc]%Int(1e3))%10, (prog[pc]%Int(1e2))%10)
   if (prog[pc]÷Int(1e2))%10 == 1
     #print("encountered imm mode for 1")
-    i = (pc +1)%len 
+    i = (pc +1) 
   end
   if (prog[pc]÷Int(1e3))%10 == 1
     #print("encountered imm mode for 2")
-    j = (pc+2)%len
+    j = (pc+2)
   end
   if (prog[pc]÷Int(1e4))%10 == 1
     #throw(DomainError(prog[pc] , "Parameters that an instruction writes to
 #		      will never be in immediate mode."))
-    k = (pc + 3)%len
+    k = (pc + 3)
   end
   i,j,k
 end
