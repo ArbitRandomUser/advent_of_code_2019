@@ -9,4 +9,6 @@ ops = [parse(BigInt,i) for i in split(lines[1],",")]
 #ops = [1102,34915192,34915192,7,4,7,99,0]
 #ops = [104,1125899906842624,2,99]
 prog1 = program(ops)
-run_program(prog1)
+println("first answer ", run_program(prog1,[1,])[end-1])
+prog1 = program(ops)
+println("second answer ", run_program(prog1,[2,])[end-1])

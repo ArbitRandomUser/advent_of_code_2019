@@ -183,6 +183,7 @@ function step_program(prog::program,args)
 end
 
 function run_program(prog::program,args=[]; mode="TILLHALT")
+  args = [BigInt(i) for i in args] #convert args to Array{BigInt}
   #println("running with args",args)
   #mode can be TILLHALT or TILLOP
   end_flag = 0
