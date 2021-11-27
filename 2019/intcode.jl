@@ -2,17 +2,20 @@ module IntCode
 export step_program, run_program, program
 
 mutable struct program
-  ops::Array ##array of ops
-  pc::Int ##program pc
-  relbase::Int
-  argpos::Int
+  ops::Array{BigInt} ##array of ops
+  pc::BigInt ##program pc
+  relbase::BigInt
+  argpos::BigInt
   retvals::Array
 end
 
 program(x::Array) = program(copy(x),0,0,1,[]) #we copy the ops 
 
 ##julia is 1 indexed soo..
-function Base.getindex(prog::program,i::Int)
+function Base.getindex(prog::program,i::BigInt)
+  #trying to access array elements greater than array length 
+  #will pad enough 0's to the array and return the value 
+  #this way we dynamically increase memory as we require
   try
     return prog.ops[i+1]
   catch err
@@ -23,7 +26,7 @@ function Base.getindex(prog::program,i::Int)
   end
 end
 
-function Base.setindex!(prog::program,val::Int,i::Int)
+function Base.setindex!(prog::program,val::BigInt,i::BigInt)
   try
     prog.ops[i+1] = val
   catch err 
@@ -41,28 +44,28 @@ end
 function addrmode(prog::program)
   pc = prog.pc
   len = length(prog.ops)
-  #%len is to treat the ops as circular
-  #instructions near the end might not need k , but if we assign 
-  #k anyway as pc+3 it might go out of bounds , so we just treat
-  #our ops as a circular array , correct intcode programs should not
-  #use these spurious k values which have rolled over so its okay.
-
   i,j,k = prog[(pc+1)], prog[(pc+2)], prog[(pc+3)]
   #println( (prog[pc]%Int(1e4))%10 , (prog[pc]%Int(1e3))%10, (prog[pc]%Int(1e2))%10)
-  if (prog[pc]÷Int(1e2))%10 == 1
+  if (prog[pc]÷10^2)%10 == 1
     #print("encountered imm mode for 1")
     i = (pc +1) 
+  elseif (prog[pc]÷10^2)%10 == 2 #rel mode
+    i = prog.relbase + prog[(pc+1)]
   end
   if (prog[pc]÷Int(1e3))%10 == 1
     #print("encountered imm mode for 2")
     j = (pc+2)
+  elseif (prog[pc]÷10^3)%10 == 2 #rel mode
+    j = prog.relbase + prog[(pc+2)]
   end
   if (prog[pc]÷Int(1e4))%10 == 1
     #throw(DomainError(prog[pc] , "Parameters that an instruction writes to
 #		      will never be in immediate mode."))
     k = (pc + 3)
+  elseif (prog[pc]÷10^4)%10 == 2 #rel mode
+    k = prog.relbase + prog[(pc+3)]
   end
-  i,j,k
+  return i,j,k
 end
 
 function op_code1(prog::program)
@@ -78,7 +81,6 @@ function op_code2(prog::program)
 end
 
 function op_code3(prog::program,args)
-  #println("running opcode3")
   inp = nothing
   #println(args , " " , argpos)
   try 
@@ -87,9 +89,9 @@ function op_code3(prog::program,args)
   catch err
     if isa(err,BoundsError)
       print("awaiting stdin input : ")
-      inp = parse(Int,readline(stdin))
+      inp = parse(BigInt,readline(stdin))
     else
-      @assert 1==2 #hack because i dont know how to use try/catch in julia
+      throw(err)
     end
   end
 
@@ -127,9 +129,9 @@ end
 function op_code7(prog::program)
   i,j,k = addrmode(prog)
   if prog[i] < prog[j]
-    prog[k] = 1
+    prog[k] = BigInt(1)
   else
-    prog[k] = 0
+    prog[k] = BigInt(0)
   end
   prog.pc = prog.pc + 4
 end
@@ -137,9 +139,9 @@ end
 function op_code8(prog::program)
   i,j,k = addrmode(prog)
   if prog[i] == prog[j]
-    prog[k] = 1
+    prog[k] = BigInt(1)
   else 
-    prog[k] = 0
+    prog[k] = BigInt(0)
   end
   prog.pc = prog.pc + 4
 end
@@ -195,5 +197,4 @@ function run_program(prog::program,args=[]; mode="TILLHALT")
   end
   return prog.retvals 
 end #run_program
-
 end #module
