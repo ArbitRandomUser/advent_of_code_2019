@@ -34,3 +34,6 @@ function findposaim(instructions,initpos=[0,0],aim=0)
   end
   return initpos
 end
+
+posaim = findposaim(instructions)
+println("second answer ", posaim[1]*posaim[2]);

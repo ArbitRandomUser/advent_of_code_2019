@@ -7,7 +7,10 @@ println("first answer : ", sum((ilines[2:end] .- ilines[1:end-1]).>0))
 movsums = [sum(ilines[i:i+2]) for i in 1:(length(ilines)-2)]
 println("second answer : ", sum((movsums[2:end] .- movsums[1:end-1]).>0))
 
-function f(a::Array{Int})
-  movsums = [sum(a) for i in 1:(length(a))]
-  sum((movsums[2:end] .- movsums[1:end-1].>0))
-end
+#alternatively we can just compare every 4th element
+#since
+#sum([a,b,c]) < sum([b,c,d]) is true if a<d when a and d are positive
+println("second answer :", count(3:length(ilines)-1) do idx
+	  ilines[idx-2]<ilines[idx+1]
+	end)
+
